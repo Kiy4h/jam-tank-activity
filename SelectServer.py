@@ -20,15 +20,13 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import os
-
-from gi.repository import Gtk
-from gi.repository import GdkPixbuf
-from gi.repository import GObject
+import gtk
+import gobject
 
 from SelectWidgets import Lista
 from SelectWidgets import OponentesSelectBox
 
-from Globales import get_ip
+from Multiplayer.Globales import get_ip
 
 BASE = os.path.dirname(__file__)
 
@@ -47,18 +45,18 @@ Permite Elegir Opciones del Juego:
 """
 
 
-class SelectServer(Gtk.EventBox):
+class SelectServer(gtk.EventBox):
 
     __gsignals__ = {
-    "accion": (GObject.SIGNAL_RUN_FIRST,
-        GObject.TYPE_NONE, (GObject.TYPE_STRING,
-        GObject.TYPE_PYOBJECT))}
+    "accion": (gobject.SIGNAL_RUN_FIRST,
+        gobject.TYPE_NONE, (gobject.TYPE_STRING,
+        gobject.TYPE_PYOBJECT))}
 
     def __init__(self):
 
-        Gtk.EventBox.__init__(self)
+        gtk.EventBox.__init__(self)
 
-        #self.imagen = False
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
 
         self.game_dict = {
             'server': get_ip(),
@@ -73,67 +71,76 @@ class SelectServer(Gtk.EventBox):
 
         self.lista_mapas = Lista()
         self.lista_tanques = Lista()
-        self.mapaview = Gtk.Image()
-        self.tanqueview = Gtk.Image()
+        self.mapaview = gtk.Image()
+        self.tanqueview = gtk.Image()
         self.oponentes = OponentesSelectBox()
 
-        tabla = Gtk.Table(columns=5, rows=6, homogeneous=True)
+        tabla = gtk.Table(columns=5, rows=6, homogeneous=True)
+        tabla.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
 
-        frame = Gtk.Frame()
+        frame = gtk.Frame()
         frame.set_label(" Selecciona el Mapa: ")
         frame.set_border_width(4)
-        event = Gtk.EventBox()
+        event = gtk.EventBox()
+        frame.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
+        event.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         event.set_border_width(4)
         frame.add(event)
         self.lista_mapas.set_headers_visible(False)
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroll = gtk.ScrolledWindow()
+        scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scroll.add(self.lista_mapas)
         event.add(scroll)
         tabla.attach_defaults(frame, 0, 2, 0, 3)
 
-        frame = Gtk.Frame()
+        frame = gtk.Frame()
         frame.set_label(" Selecciona tu Tanque: ")
         frame.set_border_width(4)
-        event = Gtk.EventBox()
+        event = gtk.EventBox()
         event.set_border_width(4)
+        frame.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
+        event.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         frame.add(event)
         self.lista_tanques.set_headers_visible(False)
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroll = gtk.ScrolledWindow()
+        scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scroll.add(self.lista_tanques)
         event.add(scroll)
         tabla.attach_defaults(frame, 0, 2, 3, 5)
 
-        event = Gtk.EventBox()
+        event = gtk.EventBox()
         event.set_border_width(10)
+        event.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         event.add(self.mapaview)
         tabla.attach_defaults(event, 2, 5, 0, 3)
 
         tabla.attach_defaults(self.tanqueview, 2, 3, 4, 5)
 
-        frame = Gtk.Frame()
+        frame = gtk.Frame()
         frame.set_label(" Escribe tu Apodo: ")
         frame.set_border_width(4)
-        event = Gtk.EventBox()
+        event = gtk.EventBox()
         event.set_border_width(4)
+        frame.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
+        event.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         frame.add(event)
-        nick = Gtk.Entry()
+        nick = gtk.Entry()
         nick.set_max_length(10)
         nick.connect("changed", self.__change_nick)
         event.add(nick)
         tabla.attach_defaults(frame, 2, 5, 3, 4)
 
-        event = Gtk.EventBox()
+        event = gtk.EventBox()
+        event.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         event.set_border_width(4)
         event.add(self.oponentes)
         tabla.attach_defaults(event, 3, 5, 4, 5)
 
-        button = Gtk.Button("Cancelar")
+        button = gtk.Button("Cancelar")
         tabla.attach_defaults(button, 0, 1, 5, 6)
         button.connect("clicked", self.__accion, "salir")
 
-        self.jugar = Gtk.Button("Jugar")
+        self.jugar = gtk.Button("Jugar")
         self.jugar.set_sensitive(False)
         self.jugar.connect("clicked", self.__accion, "run")
         tabla.attach_defaults(self.jugar, 4, 5, 5, 6)
@@ -150,23 +157,18 @@ class SelectServer(Gtk.EventBox):
     def __do_realize(self, widget):
         elementos = []
         mapas_path = os.path.join(BASE, "Mapas")
-
         for arch in sorted(os.listdir(mapas_path)):
             path = os.path.join(mapas_path, arch)
             archivo = os.path.basename(path)
             elementos.append([archivo, path])
-
         self.lista_mapas.limpiar()
         self.lista_mapas.agregar_items(elementos)
-
         elementos = []
         mapas_path = os.path.join(BASE, "Tanques")
-
         for arch in sorted(os.listdir(mapas_path)):
             path = os.path.join(mapas_path, arch)
             archivo = os.path.basename(path)
             elementos.append([archivo, path])
-
         self.lista_tanques.limpiar()
         self.lista_tanques.agregar_items(elementos)
 
@@ -178,14 +180,14 @@ class SelectServer(Gtk.EventBox):
 
     def __seleccion_tanque(self, widget, path):
         rect = self.tanqueview.get_allocation()
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(path, -1, rect.height)
+        pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(path, -1, rect.height)
         self.tanqueview.set_from_pixbuf(pixbuf)
         self.game_dict['tanque'] = path
         self.__check_dict()
 
     def __seleccion_mapa(self, widget, path):
         rect = self.mapaview.get_allocation()
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(path, -1, rect.height)
+        pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(path, -1, rect.height)
         self.mapaview.set_from_pixbuf(pixbuf)
         self.game_dict['mapa'] = path
         self.__check_dict()

@@ -24,8 +24,7 @@ import socket
 import time
 import json
 import codecs
-
-from gi.repository import GObject
+import gobject
 
 MAKELOG = True
 LOGPATH = os.path.join(os.environ["HOME"], "JAMTank_load.log")
@@ -51,11 +50,11 @@ def APPEND_LOG(_dict):
     WRITE_LOG(new)
 
 
-class Client(GObject.Object):
+class Client(gobject.GObject):
 
     def __init__(self, ip):
 
-        GObject.Object.__init__(self)
+        gobject.GObject.__init__(self)
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.dir = (ip, 5000)

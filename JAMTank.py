@@ -21,10 +21,8 @@
 
 import os
 import sys
-
-from gi.repository import Gtk
-from gi.repository import Gdk
-from gi.repository import GLib
+import gtk
+import gobject
 
 from IntroWidget import IntroWidget
 from SelectServer import SelectServer
@@ -32,39 +30,29 @@ from SelectClient import SelectClient
 
 BASE = os.path.dirname(__file__)
 
-screen = Gdk.Screen.get_default()
-css_provider = Gtk.CssProvider()
-style_path = os.path.join(BASE, "Estilo.css")
-css_provider.load_from_path(style_path)
-context = Gtk.StyleContext()
-
-context.add_provider_for_screen(screen, css_provider,
-    Gtk.STYLE_PROVIDER_PRIORITY_USER)
-
 """
 Requiere:
     python-pygame
 """
 
 
-class JAMTank(Gtk.Window):
+class JAMTank(gtk.Window):
     """
-    Ventana Gtk principal del Juego.
+    Ventana gtk principal del Juego.
     """
-
-    __gtype_name__ = 'JAMTank'
 
     def __init__(self):
 
-        Gtk.Window.__init__(self)
+        gtk.Window.__init__(self)
 
         self.set_title("JAMTank")
         self.set_icon_from_file(os.path.join(BASE, "Iconos", "jamtank.svg"))
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
 
         #self.set_resizable(True)
         #self.set_size_request(640, 480)
         self.set_border_width(2)
-        #self.set_position(Gtk.WindowPosition.CENTER)
+        #self.set_position(gtk.WindowPosition.CENTER)
         self.fullscreen()
 
         # Fase 1: Introduccion
@@ -98,9 +86,6 @@ class JAMTank(Gtk.Window):
         self.eventos = []
 
     def __do_realize(self, widget):
-        """
-        Cuando la ventana está realizada, carga los widgets de Introducción.
-        """
         self.switch(False, 1)
 
     def __solo_run(self, widget, datos):
@@ -108,7 +93,7 @@ class JAMTank(Gtk.Window):
         from GameWidget import GameWidget
         self.widget_game = GameWidget()
         self.add(self.widget_game)
-        GLib.idle_add(self.widget_game.setup_init, datos)
+        gobject.idle_add(self.widget_game.setup_init, datos)
 
     def __update_events(self):
         if self.widget_game:
@@ -142,7 +127,7 @@ class JAMTank(Gtk.Window):
             from Multiplayer.ServerGameWidget import GameWidget
             self.widget_game = GameWidget()
             self.add(self.widget_game)
-            GLib.idle_add(self.widget_game.setup_init, _dict)
+            gobject.idle_add(self.widget_game.setup_init, _dict)
             self.connect('key-press-event', self.__key_press_event)
             self.connect('key-release-event', self.__key_release_event)
             self.widget_game.connect('salir', self.switch, 3)
@@ -155,7 +140,7 @@ class JAMTank(Gtk.Window):
             from Multiplayer.ClientGameWidget import GameWidget
             self.widget_game = GameWidget()
             self.add(self.widget_game)
-            GLib.idle_add(self.widget_game.setup_init, _dict)
+            gobject.idle_add(self.widget_game.setup_init, _dict)
             self.connect('key-press-event', self.__key_press_event)
             self.connect('key-release-event', self.__key_release_event)
             self.widget_game.connect('salir', self.switch, 4)
@@ -163,20 +148,17 @@ class JAMTank(Gtk.Window):
     def __key_press_event(self, widget, event):
         if not self.widget_game:
             return
-
-        nombre = Gdk.keyval_name(event.keyval)
-        teclas = ["Up", "Down", "Right", "Left", "space", "Escape"]
-
+        nombre = gtk.gdk.keyval_name(event.keyval)
+        teclas = ["w", "s", "d", "a", "space", "Escape"]
         if nombre in teclas and not nombre in self.eventos:
-            if nombre == "Up" and "Down" in self.eventos:
-                self.eventos.remove("Down")
-            elif nombre == "Down" and "Up" in self.eventos:
-                self.eventos.remove("Up")
-            elif nombre == "Right" and "Left" in self.eventos:
-                self.eventos.remove("Left")
-            elif nombre == "Left" and "Right" in self.eventos:
-                self.eventos.remove("Right")
-
+            if nombre == "w" and "s" in self.eventos:
+                self.eventos.remove("s")
+            elif nombre == "s" and "w" in self.eventos:
+                self.eventos.remove("w")
+            elif nombre == "d" and "a" in self.eventos:
+                self.eventos.remove("a")
+            elif nombre == "a" and "d" in self.eventos:
+                self.eventos.remove("d")
             self.eventos.append(nombre)
         self.__update_events()
         return False
@@ -184,12 +166,10 @@ class JAMTank(Gtk.Window):
     def __key_release_event(self, widget, event):
         if not self.widget_game:
             return
-
-        nombre = Gdk.keyval_name(event.keyval)
-        teclas = ["Up", "Down", "Right", "Left", "space", "Escape"]
+        nombre = gtk.gdk.keyval_name(event.keyval)
+        teclas = ["w", "s", "d", "a", "space", "Escape"]
         if nombre in teclas and nombre in self.eventos:
             self.eventos.remove(nombre)
-
         self.__update_events()
         return False
 
@@ -200,7 +180,7 @@ class JAMTank(Gtk.Window):
             self.intro_widget = IntroWidget()
             self.intro_widget.connect("switch", self.__intro_switch)
             self.add(self.intro_widget)
-            GLib.idle_add(self.intro_widget.load, os.path.join(
+            gobject.idle_add(self.intro_widget.load, os.path.join(
                 BASE, "Iconos", "jamtank.svg"))
 
         elif valor == 2:
@@ -217,8 +197,6 @@ class JAMTank(Gtk.Window):
             print "Esta PC será Servidor"
             self.select_widget = SelectServer()
             self.add(self.select_widget)
-            #GLib.idle_add(self.select_widget.load, os.path.join(
-            #    BASE, "Iconos", "jamtank.svg"))
             self.select_widget.connect("accion", self.__server_select_accion)
 
         elif valor == 4:
@@ -226,16 +204,14 @@ class JAMTank(Gtk.Window):
             print "Esta PC será Cliente"
             self.select_widget = SelectClient()
             self.add(self.select_widget)
-            #GLib.idle_add(self.select_widget.load, os.path.join(
-            #    BASE, "Iconos", "jamtank.svg"))
             self.select_widget.connect("accion", self.__client_select_accion)
 
         elif valor == 5:
             print "FIXME: Creditos"
 
-        GLib.idle_add(self.queue_draw)
+        gobject.idle_add(self.queue_draw)
 
 
 if __name__ == "__main__":
     JAMTank()
-    Gtk.main()
+    gtk.main()

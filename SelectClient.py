@@ -20,10 +20,8 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import os
-
-from gi.repository import Gtk
-from gi.repository import GdkPixbuf
-from gi.repository import GObject
+import gtk
+import gobject
 
 from SelectWidgets import Lista
 
@@ -41,19 +39,18 @@ Permite Elegir Opciones del Juego:
 """
 
 
-class SelectClient(Gtk.EventBox):
+class SelectClient(gtk.EventBox):
 
     __gsignals__ = {
-    "accion": (GObject.SIGNAL_RUN_FIRST,
-        GObject.TYPE_NONE, (GObject.TYPE_STRING,
-        GObject.TYPE_PYOBJECT))}
+    "accion": (gobject.SIGNAL_RUN_FIRST,
+        gobject.TYPE_NONE, (gobject.TYPE_STRING,
+        gobject.TYPE_PYOBJECT))}
 
     def __init__(self):
 
-        Gtk.EventBox.__init__(self)
+        gtk.EventBox.__init__(self)
 
-        #self.temp_path = "    mp/jamtank_intro_img.png"
-        #self.imagen = False
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
 
         self.game_dict = {
             'nick': "",
@@ -64,41 +61,48 @@ class SelectClient(Gtk.EventBox):
         self.set_border_width(10)
 
         self.lista_tanques = Lista()
-        self.tanqueview = Gtk.Image()
+        self.tanqueview = gtk.Image()
 
-        tabla = Gtk.Table(columns=4, rows=6, homogeneous=True)
+        tabla = gtk.Table(columns=4, rows=6, homogeneous=True)
+        tabla.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
 
-        frame = Gtk.Frame()
+        frame = gtk.Frame()
         frame.set_label(" Selecciona tu Tanque: ")
         frame.set_border_width(4)
-        event = Gtk.EventBox()
+        event = gtk.EventBox()
         event.set_border_width(4)
+        frame.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
+        event.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         frame.add(event)
         self.lista_tanques.set_headers_visible(False)
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroll = gtk.ScrolledWindow()
+        scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scroll.add(self.lista_tanques)
         event.add(scroll)
         tabla.attach_defaults(frame, 0, 2, 0, 4)
 
-        frame = Gtk.Frame()
+        frame = gtk.Frame()
         frame.set_label(" Escribe la Ip del Servidor: ")
         frame.set_border_width(4)
-        event = Gtk.EventBox()
+        event = gtk.EventBox()
         event.set_border_width(4)
+        frame.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
+        event.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         frame.add(event)
-        server = Gtk.Entry()
+        server = gtk.Entry()
         server.connect("changed", self.__change_server)
         event.add(server)
         tabla.attach_defaults(frame, 2, 4, 0, 1)
 
-        frame = Gtk.Frame()
+        frame = gtk.Frame()
         frame.set_label(" Escribe tu Apodo: ")
         frame.set_border_width(4)
-        event = Gtk.EventBox()
+        event = gtk.EventBox()
         event.set_border_width(4)
+        frame.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
+        event.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         frame.add(event)
-        nick = Gtk.Entry()
+        nick = gtk.Entry()
         nick.set_max_length(10)
         nick.connect("changed", self.__change_nick)
         event.add(nick)
@@ -106,11 +110,11 @@ class SelectClient(Gtk.EventBox):
 
         tabla.attach_defaults(self.tanqueview, 2, 4, 3, 4)
 
-        button = Gtk.Button("Cancelar")
+        button = gtk.Button("Cancelar")
         tabla.attach_defaults(button, 0, 1, 5, 6)
         button.connect("clicked", self.__accion, "salir")
 
-        self.jugar = Gtk.Button("Jugar")
+        self.jugar = gtk.Button("Jugar")
         self.jugar.set_sensitive(False)
         self.jugar.connect("clicked", self.__accion, "run")
         tabla.attach_defaults(self.jugar, 3, 4, 5, 6)
@@ -122,33 +126,13 @@ class SelectClient(Gtk.EventBox):
 
         self.show_all()
 
-    ''' FIXME: Pinta el fondo, no lo uso
-    def __do_draw(self, widget, context):
-        rect = widget.get_allocation()
-
-        src = self.imagen.copy()
-        dst = GdkPixbuf.Pixbuf.new_from_file_at_size(
-            self.temp_path, rect.width, rect.height)
-
-        GdkPixbuf.Pixbuf.scale(src, dst, 0, 0, 100, 100, 0, 0, 1.5, 1.5,
-            GdkPixbuf.InterpType.BILINEAR)
-
-        x = rect.width / 2 - dst.get_width() / 2
-        y = rect.height / 2 - dst.get_height() / 2
-
-        Gdk.cairo_set_source_pixbuf(context, dst, x, y)
-        context.paint()
-    '''
-
     def __do_realize(self, widget):
         elementos = []
         mapas_path = os.path.join(BASE, "Tanques")
-
         for arch in sorted(os.listdir(mapas_path)):
             path = os.path.join(mapas_path, arch)
             archivo = os.path.basename(path)
             elementos.append([archivo, path])
-
         self.lista_tanques.limpiar()
         self.lista_tanques.agregar_items(elementos)
 
@@ -183,7 +167,7 @@ class SelectClient(Gtk.EventBox):
 
     def __seleccion_tanque(self, widget, path):
         rect = self.tanqueview.get_allocation()
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(path, -1, rect.height)
+        pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(path, -1, rect.height)
         self.tanqueview.set_from_pixbuf(pixbuf)
         self.game_dict['tanque'] = path
         self.__check_dict()
@@ -198,16 +182,3 @@ class SelectClient(Gtk.EventBox):
                 valor = False
                 break
         self.jugar.set_sensitive(valor)
-
-    ''' FIXME: Pinta el fondo, no lo uso
-    def load(self, path):
-        """
-        Carga una imagen para pintar el fondo.
-        """
-        if path:
-            if os.path.exists(path):
-                self.imagen = GdkPixbuf.Pixbuf.new_from_file(path)
-                self.imagen.savev(self.temp_path, "png", [], [])
-                self.set_size_request(-1, -1)
-        self.get_child().connect("draw", self.__do_draw)
-    '''

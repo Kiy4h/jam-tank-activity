@@ -23,10 +23,8 @@ import os
 import pygame
 import random
 import platform
-
-from gi.repository import GObject
-from gi.repository import Gtk
-from gi.repository import GLib
+import gobject
+import gtk
 
 from Jugador import Jugador
 from Bala import Bala
@@ -50,17 +48,17 @@ def get_model():
         }
 
 
-class Juego(GObject.Object):
+class Juego(gobject.GObject):
 
     __gsignals__ = {
-    "update": (GObject.SIGNAL_RUN_LAST,
-        GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, )),
-    "end": (GObject.SIGNAL_RUN_LAST,
-        GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, ))}
+    "update": (gobject.SIGNAL_RUN_LAST,
+        gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
+    "end": (gobject.SIGNAL_RUN_LAST,
+        gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, ))}
 
     def __init__(self, _dict, client):
 
-        GObject.Object.__init__(self)
+        gobject.GObject.__init__(self)
 
         self.GAME = {}
         self.GAME['mapa'] = str(_dict['mapa'].strip())
@@ -272,7 +270,7 @@ class Juego(GObject.Object):
     def __emit_update(self):
         if bool(self.estado):
             self.emit("update", dict(self.JUGADORES))
-            GLib.timeout_add(1500, self.__emit_update)
+            gobject.timeout_add(1500, self.__emit_update)
         return False
 
     def __end(self):
@@ -289,13 +287,13 @@ class Juego(GObject.Object):
         self.ventana.blit(self.escenario, (0, 0))
         pygame.display.update()
         pygame.time.wait(3)
-        GLib.timeout_add(1500, self.__emit_update)
+        gobject.timeout_add(1500, self.__emit_update)
         while self.estado == "En Juego":
             try:
                 if not OLPC:
                     self.reloj.tick(35)
-                while Gtk.events_pending():
-                    Gtk.main_iteration()
+                while gtk.events_pending():
+                    gtk.main_iteration()
                 self.jugadores.clear(self.ventana, self.escenario)
                 self.balas.clear(self.ventana, self.escenario)
                 self.explosiones.clear(self.ventana, self.escenario)

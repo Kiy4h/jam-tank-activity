@@ -20,11 +20,8 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import os
-
-from gi.repository import Gtk
-from gi.repository import Gdk
-from gi.repository import GdkPixbuf
-from gi.repository import GObject
+import gobject
+import gtk
 
 """
 Contiene Opciones:
@@ -36,56 +33,55 @@ Contiene Opciones:
 """
 
 
-class IntroWidget(Gtk.Table):
+class IntroWidget(gtk.Table):
 
     __gsignals__ = {
-        "switch": (GObject.SIGNAL_RUN_LAST,
-            GObject.TYPE_NONE, (GObject.TYPE_STRING, ))}
+        "switch": (gobject.SIGNAL_RUN_LAST,
+            gobject.TYPE_NONE, (gobject.TYPE_STRING, ))}
 
     def __init__(self):
 
-        Gtk.Table.__init__(self, rows=7, columns=3, homogeneous=True)
+        gtk.Table.__init__(self, rows=7, columns=3, homogeneous=True)
 
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         self.imagen = False
         self.temp_path = "/dev/shm/jamtank_intro_img.png"
 
-        boton = Gtk.Button("Jugar Solo")
+        boton = gtk.Button("Jugar Solo")
         boton.connect("clicked", self.__emit_switch, "solo")
         self.attach(boton, 1, 2, 1, 2)
         boton.set_sensitive(False)
 
-        boton = Gtk.Button("Crear en Red")
+        boton = gtk.Button("Crear en Red")
         boton.connect("clicked", self.__emit_switch, "red")
         self.attach(boton, 1, 2, 2, 3)
 
-        boton = Gtk.Button("Unirse en Red")
+        boton = gtk.Button("Unirse en Red")
         boton.connect("clicked", self.__emit_switch, "join")
         self.attach(boton, 1, 2, 3, 4)
 
-        boton = Gtk.Button("Creditos")
+        boton = gtk.Button("Creditos")
         boton.connect("clicked", self.__emit_switch, "creditos")
         self.attach(boton, 1, 2, 4, 5)
         boton.set_sensitive(False)
 
-        boton = Gtk.Button("Salir")
+        boton = gtk.Button("Salir")
         boton.connect("clicked", self.__emit_switch, "salir")
         self.attach(boton, 1, 2, 5, 6)
 
         self.show_all()
 
-    def __do_draw(self, widget, context):
+    def __do_draw(self, widget, event):
+        context = widget.window.cairo_create()
         rect = self.get_allocation()
         src = self.imagen
-        dst = GdkPixbuf.Pixbuf.new_from_file_at_size(
+        dst = gtk.gdk.pixbuf_new_from_file_at_size(
             self.temp_path, rect.width, rect.height)
-
-        GdkPixbuf.Pixbuf.scale(src, dst, 0, 0, 100, 100, 0, 0, 1.5, 1.5,
-            GdkPixbuf.InterpType.BILINEAR)
-
+        gtk.gdk.Pixbuf.scale(src, dst, 0, 0, 100, 100, 0, 0, 1.5, 1.5,
+            0) #GdkPixbuf.InterpType.BILINEAR
         x = rect.width / 2 - dst.get_width() / 2
         y = rect.height / 2 - dst.get_height() / 2
-
-        Gdk.cairo_set_source_pixbuf(context, dst, x, y)
+        context.set_source_pixbuf(dst, x, y)
         context.paint()
 
     def __emit_switch(self, widget, valor):
@@ -97,7 +93,7 @@ class IntroWidget(Gtk.Table):
         """
         if path:
             if os.path.exists(path):
-                self.imagen = GdkPixbuf.Pixbuf.new_from_file(path)
-                self.imagen.savev(self.temp_path, "png", [], [])
+                self.imagen = gtk.gdk.pixbuf_new_from_file(path)
+                self.imagen.save(self.temp_path, "png")#, [], [])
                 self.set_size_request(-1, -1)
-        self.connect("draw", self.__do_draw)
+        self.connect("expose-event", self.__do_draw)

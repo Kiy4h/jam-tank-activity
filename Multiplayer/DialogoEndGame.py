@@ -19,25 +19,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-from gi.repository import Gtk
-from gi.repository import GObject
-from gi.repository import GLib
-from gi.repository import GdkPixbuf
+import gtk
+import gobject
 
 
-class DialogoEndGame(Gtk.Dialog):
+class DialogoEndGame(gtk.Dialog):
 
     def __init__(self, parent=None, _dict={}):
 
-        Gtk.Dialog.__init__(self,
+        gtk.Dialog.__init__(self,
             parent=parent,
-            flags=Gtk.DialogFlags.MODAL,
-            buttons=["Cerrar", Gtk.ResponseType.ACCEPT])
+            flags=gtk.DIALOG_MODAL,
+            buttons=("Cerrar", gtk.RESPONSE_ACCEPT))
 
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         self.set_decorated(False)
         self.set_border_width(15)
-
-        label = Gtk.Label("La Batalla ha Concluido")
+        label = gtk.Label("La Batalla ha Concluido")
         label.show()
         informe = InformeWidget(_dict)
         self.vbox.pack_start(label, False, False, 5)
@@ -45,44 +43,42 @@ class DialogoEndGame(Gtk.Dialog):
         self.set_size_request(500, 300)
 
 
-class InformeWidget(Gtk.EventBox):
+class InformeWidget(gtk.EventBox):
 
     def __init__(self, _dict):
 
-        Gtk.EventBox.__init__(self)
+        gtk.EventBox.__init__(self)
 
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         self.lista = ListaDatos(_dict)
-
-        scroll = Gtk.ScrolledWindow()
+        scroll = gtk.ScrolledWindow()
         scroll.set_policy(
-            Gtk.PolicyType.NEVER,
-            Gtk.PolicyType.AUTOMATIC)
+            gtk.POLICY_NEVER,
+            gtk.POLICY_AUTOMATIC)
         scroll.add_with_viewport(self.lista)
-
         self.add(scroll)
         self.show_all()
 
 
-class ListaDatos(Gtk.TreeView):
+class ListaDatos(gtk.TreeView):
 
     def __init__(self, _dict):
 
-        Gtk.TreeView.__init__(self, Gtk.ListStore(
-            GdkPixbuf.Pixbuf,
-            GObject.TYPE_STRING,
-            GObject.TYPE_INT))
+        gtk.TreeView.__init__(self, gtk.ListStore(
+            gtk.gdk.Pixbuf,
+            gobject.TYPE_STRING,
+            gobject.TYPE_INT))
 
         self.set_property("rules-hint", True)
         self.set_headers_clickable(True)
         self.set_headers_visible(True)
-
         self.__setear_columnas()
         self.show_all()
 
         ips = _dict.keys()
         items = []
         for ip in ips:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(
+            pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
                 _dict[ip]['tanque'], 24, -1)
             item = (pixbuf, _dict[ip]['nick'], _dict[ip]['puntos'])
             items.append(item)
@@ -95,32 +91,31 @@ class ListaDatos(Gtk.TreeView):
         self.append_column(self.__construir_columa('Puntos', 2, True))
 
     def __construir_columa(self, text, index, visible):
-        render = Gtk.CellRendererText()
-        columna = Gtk.TreeViewColumn(text, render, text=index)
+        render = gtk.CellRendererText()
+        columna = gtk.TreeViewColumn(text, render, text=index)
         columna.set_sort_column_id(index)
         columna.set_property('visible', visible)
         columna.set_property('resizable', False)
-        columna.set_sizing(Gtk.TreeViewColumnSizing.AUTOSIZE)
+        columna.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
         return columna
 
     def __construir_columa_icono(self, text, index, visible):
-        render = Gtk.CellRendererPixbuf()
-        columna = Gtk.TreeViewColumn(text, render, pixbuf=index)
+        render = gtk.CellRendererPixbuf()
+        columna = gtk.TreeViewColumn(text, render, pixbuf=index)
         columna.set_property('visible', visible)
         columna.set_property('resizable', False)
-        columna.set_sizing(Gtk.TreeViewColumnSizing.AUTOSIZE)
+        columna.set_sizing(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
         return columna
 
     def __ejecutar_agregar_elemento(self, elementos):
         if not elementos:
-            self.get_model().set_sort_column_id(2, Gtk.SortType.DESCENDING)
+            self.get_model().set_sort_column_id(2, gtk.SORT_DESCENDING)
             return False
-
         ip, nick, puntos = elementos[0]
         self.get_model().append([ip, nick, puntos])
         elementos.remove(elementos[0])
-        GLib.idle_add(self.__ejecutar_agregar_elemento, elementos)
+        gobject.idle_add(self.__ejecutar_agregar_elemento, elementos)
         return False
 
     def agregar_items(self, elementos):
-        GLib.idle_add(self.__ejecutar_agregar_elemento, elementos)
+        gobject.idle_add(self.__ejecutar_agregar_elemento, elementos)

@@ -22,11 +22,8 @@
 import os
 import time
 import threading
-
-from gi.repository import Gtk
-from gi.repository import GdkX11
-from gi.repository import GObject
-from gi.repository import GLib
+import gtk
+import gobject
 
 from Network.Server import Server
 from Network.Server import RequestHandler
@@ -37,6 +34,7 @@ from DialogoEndGame import DialogoEndGame
 
 from Globales import MAKELOG
 from Globales import APPEND_LOG
+from Globales import get_ip
 
 if MAKELOG:
     from Globales import reset_log
@@ -48,18 +46,14 @@ def terminate_thread(thread):
     Termina un hilo python desde otro hilo.
     thread debe ser una instancia threading.Thread
     """
-
     if not thread.isAlive():
         return
-
     import ctypes
     exc = ctypes.py_object(SystemExit)
     res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
         ctypes.c_long(thread.ident), exc)
-
     if res == 0:
         raise ValueError("No Existe el id de este hilo")
-
     elif res > 1:
         """
         si devuelve un número mayor que uno, estás en problemas, entonces
@@ -69,16 +63,17 @@ def terminate_thread(thread):
         raise SystemError("PyThreadState_SetAsyncExc failed")
 
 
-class GameWidget(Gtk.Paned):
+class GameWidget(gtk.Paned):
 
     __gsignals__ = {
-    "salir": (GObject.SIGNAL_RUN_LAST,
-        GObject.TYPE_NONE, [])}
+    "salir": (gobject.SIGNAL_RUN_LAST,
+        gobject.TYPE_NONE, [])}
 
     def __init__(self):
 
-        Gtk.Paned.__init__(self, orientation=Gtk.Orientation.HORIZONTAL)
+        gtk.Paned.__init__(self, orientation=gtk.ORIENTATION_HORIZONTAL)
 
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         self.drawing = DrawingWidget()
         self.derecha = Derecha()
 
@@ -100,7 +95,6 @@ class GameWidget(Gtk.Paned):
         self.emit('salir')
 
     def setup_init(self, _dict):
-        from Globales import get_ip
         ip = get_ip()
         server = str(_dict['server'])
         tanque = str(_dict['tanque'])
@@ -114,23 +108,24 @@ class GameWidget(Gtk.Paned):
         self.drawing.salir()
 
 
-class DrawingWidget(Gtk.DrawingArea):
+class DrawingWidget(gtk.DrawingArea):
 
     __gsignals__ = {
-    "update": (GObject.SIGNAL_RUN_LAST,
-        GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, )),
-    "salir": (GObject.SIGNAL_RUN_LAST,
-        GObject.TYPE_NONE, [])}
+    "update": (gobject.SIGNAL_RUN_LAST,
+        gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, )),
+    "salir": (gobject.SIGNAL_RUN_LAST,
+        gobject.TYPE_NONE, [])}
 
     def __init__(self):
 
-        Gtk.DrawingArea.__init__(self)
+        gtk.DrawingArea.__init__(self)
 
         self.server_thread = False
         self.client = False
         self.server = False
         self.juego = False
 
+        self.connect("expose-event", self.__do_draw)
         self.show_all()
         self.set_size_request(640, 480)
 
@@ -146,27 +141,21 @@ class DrawingWidget(Gtk.DrawingArea):
         enemigos = str(_dict['enemigos'])
         vidas = str(_dict['vidas'])
         nick = str(_dict['nick'])
-
         self.client = Client(server)
         connected = self.client.conectarse()
-
         if connected:
             _buffer = "Config,%s,%s,%s,%s,%s" % (mapa, enemigos,
                 vidas, tanque, nick)
-
             self.client.enviar(_buffer)
             retorno = self.client.recibir()
-
             if retorno == "OK":
                 tanque = str(_dict['tanque'])
                 mapa = str(_dict['mapa'])
-
                 new_dict = {
                     'tanque': tanque,
                     'nick': nick,
                     'mapa': mapa,
                     }
-
                 if MAKELOG:
                     APPEND_LOG({'client': new_dict})
                 time.sleep(0.5)
@@ -197,7 +186,7 @@ class DrawingWidget(Gtk.DrawingArea):
         """
         try:
             # FIXME: Agregar Dialogo con explicacion sobre teclas
-            xid = self.get_property('window').get_xid()
+            xid = self.get_property('window').xid
             os.putenv('SDL_WINDOWID', str(xid))
             self.juego = Juego(dict(_dict), self.client)
             self.juego.connect("end", self.__end_game)
@@ -213,6 +202,14 @@ class DrawingWidget(Gtk.DrawingArea):
 
     def __update_players(self, juego, _dict):
         self.emit("update", _dict)
+
+    def __do_draw(self, widget=None, event=None):
+        """
+        Reescalado en gtk, reescala en pygame.
+        """
+        rect = self.get_allocation()
+        if self.juego:
+            self.juego.escalar((rect.width, rect.height))
 
     def setup_init(self, _dict):
         """
@@ -235,14 +232,6 @@ class DrawingWidget(Gtk.DrawingArea):
             dialog.run()
             self.salir()
         return False
-
-    def do_draw(self, context):
-        """
-        Reescalado en gtk, reescala en pygame.
-        """
-        rect = self.get_allocation()
-        if self.juego:
-            self.juego.escalar((rect.width, rect.height))
 
     def update_events(self, eventos):
         """
@@ -278,26 +267,24 @@ class DrawingWidget(Gtk.DrawingArea):
         self.emit('salir')
 
 
-class Dialogo(Gtk.Dialog):
+class Dialogo(gtk.Dialog):
 
     def __init__(self, parent=None, text=""):
 
-        Gtk.Dialog.__init__(self,
+        gtk.Dialog.__init__(self,
             parent=parent,
-            flags=Gtk.DialogFlags.MODAL)
+            flags=gtk.DIALOG_MODAL)
 
+        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse("#ffeeaa"))
         self.set_decorated(False)
         self.set_border_width(15)
-
-        label = Gtk.Label(text)
+        label = gtk.Label(text)
         label.show()
-
         self.vbox.pack_start(label, True, True, 5)
-
         self.connect("realize", self.__do_realize)
 
     def __do_realize(self, widget):
-        GLib.timeout_add(2000, self.__destroy)
+        gobject.timeout_add(2000, self.__destroy)
 
     def __destroy(self):
         self.destroy()

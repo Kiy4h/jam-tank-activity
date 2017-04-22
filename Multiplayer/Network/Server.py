@@ -25,8 +25,7 @@ import SocketServer
 import time
 import json
 import codecs
-
-from gi.repository import GLib
+import gobject
 
 
 MAKELOG = True
@@ -167,7 +166,7 @@ class RequestHandler(SocketServer.StreamRequestHandler):
                     # Jugador pierde una Vida pero sigue en Juego.
                     self.server.JUGADORES[ene]['pos'] = "-,-,-"
                     self.server.JUGADORES[ene]['estado'] = False
-                    GLib.timeout_add(4000, self.server.reactivar_jugador, ene)
+                    gobject.timeout_add(4000, self.server.reactivar_jugador, ene)
 
             for i in self.server.JUGADORES.keys():
                 # pasar x,y de explosion a todos los jugadores.
