@@ -1,0 +1,30 @@
+/*
+http://thegnomejournal.wordpress.com/2011/03/15/styling-gtk-with-css/
+*/
+
+GtkWindow {
+    background-color: #ffeeaa;
+    color: #000000;
+    font: Purisa 10;
+}
+GtkEventBox, GtkPaned {
+    background-color: #ffeeaa;
+}
+GtkFrame {
+    color: #000000;
+    font: Purisa 10;
+}
+
+GtkButton {
+    border-image: none;
+    background-image: none;
+    background-color: #5aa02c;
+    color: #ffffff;
+    font: Purisa 10;
+}
+
+GtkButton:prelight {
+    color: #000000;
+    font: Purisa 14;
+    background-color: #c6e9af;
+}
